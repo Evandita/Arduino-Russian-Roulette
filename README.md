@@ -102,3 +102,8 @@ init_ADC1:
 
 ### Rangkaian Asli
 ![alt text](https://cdn.discordapp.com/attachments/861583157441724450/1244988148631474226/image.png?ex=66571d11&is=6655cb91&hm=e872272242c7b7fbca107e7fb060a30c55c7386cd26ac8afb5724ccc2d095eff&)
+
+### Demonstrasi Rangkaian
+[![alt text](https://img.youtube.com/vi/ow8UFFrdRJs/0.jpg)](https://www.youtube.com/watch?v=ow8UFFrdRJs)
+Link YouTube: https://www.youtube.com/watch?v=ow8UFFrdRJs
+Link Wokwi: https://wokwi.com/projects/398664161947787265
