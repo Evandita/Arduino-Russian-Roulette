@@ -204,3 +204,120 @@ init_serial:
     STS   UCSR0C, R24
     RET
 ;========================================================================
+
+
+
+
+
+;========================================================================
+print_serial:
+;------------------------------------------------------------------
+; Uses R16, R23, R27, R28 temporarily
+; This is used for debugging purposes only
+;------------------------------------------------------------------
+    MOV   R23, R19
+    MOV   R16, R19
+    RCALL ASCII_LSD
+    RCALL LCD_buffer
+    STS   UDR0, R16     ;print digit1 of 10-bit result
+    ;----------------------------------------------------------------
+    MOV   R16, R18
+    RCALL ASCII_MSD
+    RCALL LCD_buffer
+    STS   UDR0, R16     ;print digit2 of 10-bit result
+    ;----------------------------------------------------------------
+    MOV   R16, R18
+    RCALL ASCII_LSD
+    RCALL LCD_buffer
+    STS   UDR0, R16     ;print digit3 of 8-bit result
+    ;----------------------------------------------------------------
+    LDI   R16, 0x0A
+    RCALL LCD_buffer
+    STS   UDR0, R16     ;Enter in Serial
+    ;--------------------------------------------------------------------   
+    LDI   R16, 0x0D
+    RCALL LCD_buffer
+    STS   UDR0, R16     ;Finish Statement
+    ;--------------------------------------------------------------------   
+    RET                 ;return to loop()
+;====================================================================
+LCD_buffer:
+    LDS   R27, UCSR0A
+    SBRS  R27, UDRE0    ;test data buffer if data can be sent
+    RJMP  LCD_buffer
+    RET
+;====================================================================
+ASCII_MSD:
+    MOV   R23, R16      ;save copy of result
+    ANDI  R16, 0xF0     ;extract & swap high-nibble
+    SWAP  R16 
+    SUBI  R16, -48      ;R16 = R16 - (48) = R16 + 48
+    MOV   R28, R16      ;save a copy of high-byte result
+    SUBI  R28, 58       ;if +ve       
+    BRPL  A_F_D1        ;branch & add 7 to get ASCII A to F
+adc_loop1: RET
+;====================================================================
+ASCII_LSD:
+    MOV   R16, R23      ;restore copy of result
+    ANDI  R16, 0x0F     ;extract low-nibble
+    SUBI  R16, -48      ;R16 = R16 - (48) = R16 + 48
+    MOV   R28, R16      ;save a copy of high-byte result
+    SUBI  R28, 58       ;if +ve
+    BRPL  A_F_D0        ;branch & add 7 to get ASCII A to F
+adc_loop2: RET    
+;====================================================================
+A_F_D1:
+    SUBI  R16, -7       ;R16 = R16 - (7) = R16 + 7
+    RJMP  adc_loop1
+;---------------------------------------------------------------
+A_F_D0:
+    SUBI  R16, -7       ;R16 = R16 - (7) = R16 + 7
+    RJMP  adc_loop2
+;========================================================================
+
+
+
+
+;========================================================================
+delay_sec:                
+;------------------------------------------------------------------
+; Gives 1 second delay
+;------------------------------------------------------------------
+    RCALL delay_timer1
+    RCALL delay_timer1
+    RET
+;========================================================================
+
+
+
+
+
+;========================================================================
+delay_timer1:             
+;------------------------------------------------------------------
+; Uses R20 temporarily
+; Create 0.5 sec delay
+;------------------------------------------------------------------
+.EQU value, 57724         ;value to give 0.5 sec delay
+    LDI   R20, hi8(value)
+    STS   TCNT1H, R20
+    LDI   R20, lo8(value)
+    STS   TCNT1L, R20     ;initialize counter TCNT1 = value
+    ;-------------------------------------------------------
+    LDI   R20, 0b00000000
+    STS   TCCR1A, R20
+    LDI   R20, 0b00000101
+    STS   TCCR1B, R20     ;normal mode, prescaler = 1024
+    ;-------------------------------------------------------
+timer_loop: 
+    IN    R20, TIFR1      ;get TIFR1 byte & check
+    SBRS  R20, TOV1       ;if TOV1=1, skip next instruction
+    RJMP  timer_loop      ;else, loop back & check TOV1 flag
+    ;-------------------------------------------------------
+    LDI   R20, 1<<TOV1
+    OUT   TIFR1, R20      ;clear TOV1 flag
+    ;-------------------------------------------------------
+    LDI   R20, 0b00000000
+    STS   TCCR1B, R20     ;stop timer0
+    RET
+;========================================================================
