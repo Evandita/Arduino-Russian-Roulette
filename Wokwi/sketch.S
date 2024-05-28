@@ -321,3 +321,135 @@ timer_loop:
     STS   TCCR1B, R20     ;stop timer0
     RET
 ;========================================================================
+
+
+
+
+
+;========================================================================
+get_counter:
+;------------------------------------------------------------------
+; Uses result from R19 to get counter
+; Counter is saved in R25
+;------------------------------------------------------------------
+    LDI   R25, 1
+counter_loop:
+    SUBI  R19, 1
+    BRLO  done_counter
+    INC   R25
+    RJMP  counter_loop
+done_counter: RET
+;========================================================================
+
+
+
+
+
+;========================================================================
+shoot:
+;------------------------------------------------------------------
+; Hold until button in pin PD7 is clicked
+; Once clicked, decrement Counter (R25)
+;------------------------------------------------------------------
+    SBIS  PIND, 7
+    RJMP  shoot
+    DEC   R25
+    RET
+;========================================================================
+
+
+
+
+;========================================================================
+print_alive:
+;------------------------------------------------------------------
+; Uses R17, R18, R30, R31 temporarily
+; Announce the player survived the round
+;------------------------------------------------------------------
+    LDI   R30, lo8(msg_alive)
+    LDI   R31, hi8(msg_alive)               ;Z points to string message
+alive_agn:
+    LPM   R18, Z+                           ;load char of string onto R18
+    CPI   R18, 0                            ;check if R18=0 (end of string)
+    BREQ  alive_exit                        ;if yes, exit
+    ;--------------------------------------------------------------------
+alive_loop:
+    LDS   R17, UCSR0A
+    SBRS  R17, UDRE0                        ;test data buffer if data can be sent
+    RJMP  alive_loop
+    STS   UDR0, R18                         ;send char in R18 to serial monitor
+    ;--------------------------------------------------------------------
+    RJMP  alive_agn                         ;loop back & get next character
+    ;--------------------------------------------------------------------
+alive_exit:
+    RET
+;------------------------------------------------------------------------
+msg_alive:
+    .ascii "Alive"
+    .byte 10,13,0
+;========================================================================
+
+
+
+
+;========================================================================
+print_death:
+;------------------------------------------------------------------
+; Uses R17, R18, R30, R31 temporarily
+; Announce the player did not survive the round
+;------------------------------------------------------------------
+    LDI   R30, lo8(msg_death)
+    LDI   R31, hi8(msg_death)               ;Z points to string message
+death_agn:
+    LPM   R18, Z+                           ;load char of string onto R18
+    CPI   R18, 0                            ;check if R18=0 (end of string)
+    BREQ  death_exit                        ;if yes, exit
+    ;--------------------------------------------------------------------
+death_loop:
+    LDS   R17, UCSR0A
+    SBRS  R17, UDRE0                        ;test data buffer if data can be sent
+    RJMP  death_loop
+    STS   UDR0, R18                         ;send char in R18 to serial monitor
+    ;--------------------------------------------------------------------
+    RJMP  death_agn                         ;loop back & get next character
+    ;--------------------------------------------------------------------
+death_exit:
+    RET
+;------------------------------------------------------------------------
+msg_death:
+    .ascii "Death" 
+    .byte 10,13,0
+;========================================================================
+
+
+
+
+
+;========================================================================
+print_intro:
+;------------------------------------------------------------------
+; Uses R17, R18, R30, R31 temporarily
+; Announce the game is about to start
+;------------------------------------------------------------------
+    LDI   R30, lo8(msg_intro)
+    LDI   R31, hi8(msg_intro)               ;Z points to string message
+intro_agn:
+    LPM   R18, Z+                           ;load char of string onto R18
+    CPI   R18, 0                            ;check if R18=0 (end of string)
+    BREQ  intro_exit                        ;if yes, exit
+    ;--------------------------------------------------------------------
+intro_loop:
+    LDS   R17, UCSR0A
+    SBRS  R17, UDRE0                        ;test data buffer if data can be sent
+    RJMP  intro_loop
+    STS   UDR0, R18                         ;send char in R18 to serial monitor
+    ;--------------------------------------------------------------------
+    RJMP  intro_agn                         ;loop back & get next character
+    ;--------------------------------------------------------------------
+intro_exit:
+    RET
+;------------------------------------------------------------------------
+msg_intro:
+    .ascii "Game starts in 5sec..."
+    .byte 10,13,0
+;========================================================================
